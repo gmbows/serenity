@@ -43,6 +43,7 @@ private:
     struct FlexItem {
         Box& box;
         CSS::FlexBasisData used_flex_basis {};
+        bool used_flex_basis_is_definite { false };
         float flex_base_size { 0 };
         float hypothetical_main_size { 0 };
         float hypothetical_cross_size { 0 };
@@ -77,6 +78,7 @@ private:
         Vector<FlexItem*> items;
         float cross_size { 0 };
         float remaining_free_space { 0 };
+        float chosen_flex_fraction { 0 };
     };
 
     bool has_definite_main_size(Box const&) const;
@@ -91,8 +93,6 @@ private:
     float specified_cross_max_size(Box const&) const;
     float calculated_main_size(Box const&) const;
     bool is_cross_auto(Box const&) const;
-    bool is_main_axis_margin_first_auto(Box const&) const;
-    bool is_main_axis_margin_second_auto(Box const&) const;
     float specified_main_size_of_child_box(Box const& child_box) const;
     float specified_main_min_size(Box const&) const;
     float specified_cross_min_size(Box const&) const;
@@ -104,9 +104,22 @@ private:
     Optional<float> specified_size_suggestion(FlexItem const&) const;
     Optional<float> transferred_size_suggestion(FlexItem const&) const;
     float content_size_suggestion(FlexItem const&) const;
+    CSS::LengthPercentage const& computed_main_size(Box const&) const;
+    CSS::LengthPercentage const& computed_main_min_size(Box const&) const;
+    CSS::LengthPercentage const& computed_main_max_size(Box const&) const;
+    CSS::LengthPercentage const& computed_cross_size(Box const&) const;
+    CSS::LengthPercentage const& computed_cross_min_size(Box const&) const;
+    CSS::LengthPercentage const& computed_cross_max_size(Box const&) const;
+
+    float get_pixel_width(Box const& box, Optional<CSS::LengthPercentage> const& length_percentage) const;
+    float get_pixel_height(Box const& box, Optional<CSS::LengthPercentage> const& length_percentage) const;
+
+    bool flex_item_is_stretched(FlexItem const&) const;
 
     void set_main_size(Box const&, float size);
     void set_cross_size(Box const&, float size);
+    void set_has_definite_main_size(Box const&, bool);
+    void set_has_definite_cross_size(Box const&, bool);
     void set_offset(Box const&, float main_offset, float cross_offset);
     void set_main_axis_first_margin(FlexItem&, float margin);
     void set_main_axis_second_margin(FlexItem&, float margin);
@@ -126,7 +139,7 @@ private:
 
     void resolve_flexible_lengths();
 
-    void determine_hypothetical_cross_size_of_item(FlexItem&);
+    void determine_hypothetical_cross_size_of_item(FlexItem&, bool resolve_percentage_min_max_sizes);
 
     void calculate_cross_size_of_each_flex_line(float cross_min_size, float cross_max_size);
 
@@ -151,8 +164,8 @@ private:
     [[nodiscard]] float calculate_intrinsic_main_size_of_flex_container(LayoutMode);
     [[nodiscard]] float calculate_intrinsic_cross_size_of_flex_container(LayoutMode);
 
-    [[nodiscard]] float calculate_cross_min_content_contribution(FlexItem const&) const;
-    [[nodiscard]] float calculate_cross_max_content_contribution(FlexItem const&) const;
+    [[nodiscard]] float calculate_cross_min_content_contribution(FlexItem const&, bool resolve_percentage_min_max_sizes) const;
+    [[nodiscard]] float calculate_cross_max_content_contribution(FlexItem const&, bool resolve_percentage_min_max_sizes) const;
     [[nodiscard]] float calculate_main_min_content_contribution(FlexItem const&) const;
     [[nodiscard]] float calculate_main_max_content_contribution(FlexItem const&) const;
 
